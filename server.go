@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"context"
 )
 
 const VERSION = "0.0.0"
@@ -22,6 +23,8 @@ type conn struct {
 	server *Server
 	conn   net.Conn
 	rwc    *bufio.ReadWriter
+	ctx    *context.Context
+	cancel context.CancelFunc
 }
 
 type Server struct {
@@ -39,10 +42,14 @@ type StorageCmd struct {
 }
 
 func (s *Server) newConn(rwc net.Conn) (c *conn, err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	c = new(conn)
 	c.server = s
 	c.conn = rwc
 	c.rwc = bufio.NewReadWriter(bufio.NewReaderSize(rwc, 1048576), bufio.NewWriter(rwc))
+	c.ctx = &ctx
+	c.cancel = cancel
 	return c, nil
 }
 
@@ -77,10 +84,12 @@ func (s *Server) Serve(l net.Listener) error {
 func (c *conn) serve() {
 	defer func() {
 		c.server.Stats["curr_connections"].(*CounterStat).Decrement(1)
+		c.cancel()
 		c.Close()
 	}()
 	c.server.Stats["total_connections"].(*CounterStat).Increment(1)
 	c.server.Stats["curr_connections"].(*CounterStat).Increment(1)
+
 	for {
 		err := c.handleRequest()
 		if err != nil {
@@ -113,7 +122,8 @@ func (c *conn) handleRequest() error {
 			return Error
 		}
 		c.server.Stats["cmd_get"].(*CounterStat).Increment(1)
-		response := getter.Get(key)
+		//response := getter.Get(key)
+		response := getter.GetWithContext(c.ctx, key)
 		if response != nil {
 			c.server.Stats["get_hits"].(*CounterStat).Increment(1)
 			response.WriteResponse(c.rwc)
@@ -168,7 +178,8 @@ func (c *conn) handleRequest() error {
 			if cmd.Noreply {
 				go setter.Set(item)
 			} else {
-				response := setter.Set(item)
+				//response := setter.Set(item)
+				response := setter.SetWithContext(c.ctx, item)
 				if response != nil {
 					response.WriteResponse(c.rwc)
 					c.end()
@@ -198,7 +209,8 @@ func (c *conn) handleRequest() error {
 		if !ok {
 			return Error
 		}
-		err := deleter.Delete(key)
+		//err := deleter.Delete(key)
+		err := deleter.DeleteWithContext(c.ctx, key)
 		if err != nil {
 			c.rwc.WriteString(StatusNotFound)
 			c.end()

@@ -1,5 +1,7 @@
 package memcached
 
+import "context"
+
 type RequestHandler interface{}
 
 // A Getter is an object who responds to a simple
@@ -7,6 +9,7 @@ type RequestHandler interface{}
 type Getter interface {
 	RequestHandler
 	Get(string) MemcachedResponse
+	GetWithContext(*context.Context, string) MemcachedResponse
 }
 
 // A Setter is an object who response to a simple
@@ -14,11 +17,13 @@ type Getter interface {
 type Setter interface {
 	RequestHandler
 	Set(*Item) MemcachedResponse
+	SetWithContext(*context.Context, *Item) MemcachedResponse
 }
 
-// A Delter is an object who responds to a simple
+// A Deleter is an object who responds to a simple
 // "delete" command.
 type Deleter interface {
 	RequestHandler
 	Delete(string) MemcachedResponse
+	DeleteWithContext(*context.Context, string) MemcachedResponse
 }
