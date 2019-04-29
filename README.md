@@ -13,17 +13,17 @@ Implement as little or as much as you'd like.
 ```go
 type Getter interface {
 	RequestHandler
-	Get(string) (*Item, error)
+	GetWithContext(*context.Context, string) MemcachedResponse
 }
 
 type Setter interface {
 	RequestHandler
-	Set(*Item) error
+	SetWithContext(*context.Context, *Item) MemcachedResponse
 }
 
 type Deleter interface {
 	RequestHandler
-	Delete(string) error
+	DeleteWithContext(*context.Context, string) MemcachedResponse
 }
 ```
 
@@ -32,12 +32,12 @@ type Deleter interface {
 package main
 
 import (
-	memcached "github.com/mattrobenolt/go-memcached"
+	memcached "github.com/ialx/go-memcached"
 )
 
 type Cache struct {}
 
-func (c *Cache) Get(key string) (item *memcached.Item, err error) {
+func (c *Cache) GetWithContext(ctx *context.Context, key string) memcached.MemcachedResponse {
 	if key == "hello" {
 		item = &memcached.Item{
 			Key: key,

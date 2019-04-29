@@ -25,14 +25,14 @@ func TestCounterStat(t *testing.T) {
 	for i = 0; i < 10; i++ {
 		stat.Increment(1)
 	}
-	time.Sleep(1) // Force the intenal goroutine to catch up with the counts
+	time.Sleep(1 * time.Second) // Force the intenal goroutine to catch up with the counts
 	if stat.String() != "10" {
 		t.Error("Should be '10'", stat.String())
 	}
 	for i = 0; i < 10; i++ {
 		stat.Decrement(1)
 	}
-	time.Sleep(1)
+	time.Sleep(1 * time.Second) // Force the intenal goroutine to catch up with the counts
 	if stat.String() != "0" {
 		t.Error("Should be '0'", stat.String())
 	}

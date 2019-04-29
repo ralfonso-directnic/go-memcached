@@ -5,11 +5,11 @@ package memcached
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net"
 	"strconv"
-	"context"
 )
 
 const VERSION = "0.0.0"
@@ -34,22 +34,18 @@ type Server struct {
 }
 
 type StorageCmd struct {
-	Key string
-	Flags int
+	Key     string
+	Flags   int
 	Exptime int64
-	Length int
+	Length  int
 	Noreply bool
 }
 
 func (s *Server) newConn(rwc net.Conn) (c *conn, err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-
 	c = new(conn)
 	c.server = s
 	c.conn = rwc
 	c.rwc = bufio.NewReadWriter(bufio.NewReaderSize(rwc, 1048576), bufio.NewWriter(rwc))
-	c.ctx = &ctx
-	c.cancel = cancel
 	return c, nil
 }
 
@@ -67,7 +63,10 @@ func (s *Server) ListenAndServe() error {
 }
 
 func (s *Server) Serve(l net.Listener) error {
+	serverCtx, cancel := context.WithCancel(context.Background())
 	defer l.Close()
+	defer cancel()
+
 	for {
 		rw, e := l.Accept()
 		if e != nil {
@@ -77,21 +76,24 @@ func (s *Server) Serve(l net.Listener) error {
 		if err != nil {
 			continue
 		}
-		go c.serve()
+		go c.serve(&serverCtx)
 	}
 }
 
-func (c *conn) serve() {
+func (c *conn) serve(serverCtx *context.Context) {
 	defer func() {
 		c.server.Stats["curr_connections"].(*CounterStat).Decrement(1)
-		c.cancel()
 		c.Close()
 	}()
+
+	ctx, cancel := context.WithCancel(*serverCtx)
+	defer cancel()
+
 	c.server.Stats["total_connections"].(*CounterStat).Increment(1)
 	c.server.Stats["curr_connections"].(*CounterStat).Increment(1)
 
 	for {
-		err := c.handleRequest()
+		err := c.handleRequest(&ctx)
 		if err != nil {
 			if err == io.EOF {
 				return
@@ -106,7 +108,7 @@ func (c *conn) end() {
 	c.rwc.Flush()
 }
 
-func (c *conn) handleRequest() error {
+func (c *conn) handleRequest(ctx *context.Context) error {
 	line, err := c.ReadLine()
 	if err != nil || len(line) == 0 {
 		return io.EOF
@@ -123,7 +125,7 @@ func (c *conn) handleRequest() error {
 		}
 		c.server.Stats["cmd_get"].(*CounterStat).Increment(1)
 		//response := getter.Get(key)
-		response := getter.GetWithContext(c.ctx, key)
+		response := getter.GetWithContext(ctx, key)
 		if response != nil {
 			c.server.Stats["get_hits"].(*CounterStat).Increment(1)
 			response.WriteResponse(c.rwc)
@@ -179,7 +181,7 @@ func (c *conn) handleRequest() error {
 				go setter.Set(item)
 			} else {
 				//response := setter.Set(item)
-				response := setter.SetWithContext(c.ctx, item)
+				response := setter.SetWithContext(ctx, item)
 				if response != nil {
 					response.WriteResponse(c.rwc)
 					c.end()
@@ -210,7 +212,7 @@ func (c *conn) handleRequest() error {
 			return Error
 		}
 		//err := deleter.Delete(key)
-		err := deleter.DeleteWithContext(c.ctx, key)
+		err := deleter.DeleteWithContext(ctx, key)
 		if err != nil {
 			c.rwc.WriteString(StatusNotFound)
 			c.end()
