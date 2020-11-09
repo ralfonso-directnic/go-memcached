@@ -189,12 +189,12 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 				//response := setter.Set(item)
 				response := setter.SetWithContext(ctx, item)
 				if response != nil {
-					n,_ := response.WriteResponse(c.rwc)
-					c.server.Stats["bytes_written"].(*CounterStat).Increment(n)
+					byt,_ = response.WriteResponse(c.rwc)
+					c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 					c.end()
 				} else {
-					n,_ := c.rwc.WriteString(StatusStored)
-					c.server.Stats["bytes_written"].(*CounterStat).Increment(n)
+					byt,_ = c.rwc.WriteString(StatusStored)
+					c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 					c.end()
 				}
 			}
