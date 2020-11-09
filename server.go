@@ -189,7 +189,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 				//response := setter.Set(item)
 				response := setter.SetWithContext(ctx, item)
 				if response != nil {
-					byt,_ = response.WriteResponse(c.rwc)
+					byt = response.WriteResponse(c.rwc)
 					c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 					c.end()
 				} else {
