@@ -6,7 +6,7 @@ import (
 )
 
 type MemcachedResponse interface {
-	WriteResponse(io.Writer)
+	WriteResponse(io.Writer) int
 }
 
 type ItemResponse struct {
@@ -15,8 +15,12 @@ type ItemResponse struct {
 
 func (r *ItemResponse) WriteResponse(writer io.Writer) (n int) {
 	fmt.Fprintf(writer, StatusValue, r.Item.Key, r.Item.Flags, len(r.Item.Value))
-	n = writer.Write(r.Item.Value)
-	n = n + writer.Write(crlf)
+	n1,_ := writer.Write(r.Item.Value)
+	n2,_ := writer.Write(crlf)
+	
+	n = n1+n2
+	
+	return n
 }
 
 type BulkResponse struct {
@@ -30,6 +34,8 @@ func (r *BulkResponse) WriteResponse(writer io.Writer)  (n int) {
 			n = n + response.WriteResponse(writer)
 		}
 	}
+	
+	return n
 }
 
 type ClientErrorResponse struct {
@@ -38,6 +44,6 @@ type ClientErrorResponse struct {
 
 func (r *ClientErrorResponse) WriteResponse(writer io.Writer)  (n int) {
 	fmt.Fprintf(writer, StatusClientError, r.Reason)
-	n = 0
+	n = len(r.Reason)
 	return n
 }

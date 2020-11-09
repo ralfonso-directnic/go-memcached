@@ -134,7 +134,8 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 		} else {
 			c.server.Stats["get_misses"].(*CounterStat).Increment(1)
 		}
-		byt = byt + c.rwc.WriteString(StatusEnd)
+		byt,_ := c.rwc.WriteString(StatusEnd)
+		c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 		c.end()
 	case 's':
 		switch line[1] {
@@ -163,7 +164,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 			if n != cmd.Length+2 {
 				response := &ClientErrorResponse{"bad chunk data"}
 				byt = response.WriteResponse(c.rwc)
-				c.server.Stats["bytes_written"].Increment(byt)
+				c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 				c.ReadLine() // Read out the rest of the line
 				return Error
 			}
@@ -172,7 +173,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 			if !bytes.HasSuffix(value, crlf) {
 				response := &ClientErrorResponse{"bad chunk data"}
 				byt = response.WriteResponse(c.rwc)
-				c.server.Stats["bytes_written"].Increment(byt)
+				c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 				c.ReadLine() // Read out the rest of the line
 				return Error
 			}
@@ -189,11 +190,11 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 				response := setter.SetWithContext(ctx, item)
 				if response != nil {
 					byt = response.WriteResponse(c.rwc)
-					c.server.Stats["bytes_written"].Increment(byt)
+					c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 					c.end()
 				} else {
 					byt = c.rwc.WriteString(StatusStored)
-					c.server.Stats["bytes_written"].Increment(byt)
+					c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 					c.end()
 				}
 			}
@@ -205,7 +206,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 				fmt.Fprintf(c.rwc, StatusStat, key, value)
 			}
 			byt = c.rwc.WriteString(StatusEnd)
-			c.server.Stats["bytes_written"].Increment(byt)
+			c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 			c.end()
 		default:
 			return Error
@@ -223,11 +224,11 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 		err := deleter.DeleteWithContext(ctx, key)
 		if err != nil {
 			byt = c.rwc.WriteString(StatusNotFound)
-			c.server.Stats["bytes_written"].Increment(byt)
+			c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 			c.end()
 		} else {
 			byt = c.rwc.WriteString(StatusDeleted)
-			c.server.Stats["bytes_written"].Increment(byt)
+			c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 			c.end()
 		}
 	case 'q':
@@ -249,7 +250,7 @@ func (c *conn) ReadLine() (line []byte, err error) {
 	
 	line, _, err = c.rwc.ReadLine()
 	
-	c.server.Stats["bytes_read"].Increment(len(n))
+	c.server.Stats["bytes_read"].(*CounterStat).Increment(len(n))
 	
 	return
 }
@@ -257,7 +258,7 @@ func (c *conn) ReadLine() (line []byte, err error) {
 func (c *conn) Read(p []byte) (n int, err error) {
 	n,err = io.ReadFull(c.rwc, p)
 	
-	c.server.Stats["bytes_read"].Increment(n)
+	c.server.Stats["bytes_read"].(*CounterStat).Increment(n)
 	
 	return n,err
 }
