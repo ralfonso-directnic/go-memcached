@@ -2,7 +2,9 @@ package memcached
 
 import "context"
 
-type RequestHandler interface{}
+type RequestHandler interface{
+    Stats(*Stats)
+}
 
 // A Getter is an object who responds to a simple
 // "get" command.

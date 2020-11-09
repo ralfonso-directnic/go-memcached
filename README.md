@@ -35,7 +35,15 @@ import (
 	memcached "github.com/ralfonso-directnic/go-memcached"
 )
 
-type Cache struct {}
+type Cache struct {
+    
+    
+}
+
+// handle stats in your getter/setters
+func (c *Cache) Stats(s *memcached.Stats){
+    
+}   
 
 func (c *Cache) GetWithContext(ctx *context.Context, key string) memcached.MemcachedResponse {
 	if key == "hello" {

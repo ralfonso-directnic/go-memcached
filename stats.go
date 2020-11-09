@@ -109,6 +109,13 @@ func NewStats() Stats {
 	s["get_misses"] = NewCounterStat()
 	s["curr_connections"] = NewCounterStat()
 	s["total_connections"] = NewCounterStat()
-	s["evictions"] = NewCounterStat()
+	s["evictions"] = NewCounterStat() //Number of objects removed from the cache to free up memory for new items because Memcached reached it's maximum memory setting (limit_maxbytes).
+	s["bytes_read"] = NewCounterStat() //Total number of bytes received from the network by this server.
+	s["bytes_written"] = NewCounterStat() //Total number of bytes send to the network by this server.
+	s["bytes"] = NewCounterStat() // Number of bytes currently used for caching items, this server currently uses ~6 MB of it's maximum allowed (limit_maxbytes) 1 GB cache size. bytes_read  880545081   Total number of bytes received from the network by this server.
+ 	s["curr_items"] = NewCounterStat() //Number of items currently in this server's cache.
+ 	s["total_items"] = NewCounterStat() //Numer of items stored ever stored on this server. This is no "maximum item count" value but a counted increased by every new item stored in the cache.
+	s["expired_unfetched"] = NewCounterStat() // Items pulled from LRU that were never touched by get/incr/append/etc before expiring
+	s["threads"] = &FuncStat{func() string { return strconv.Itoa(runtime.NumGoroutine()) }} //# of threads (goroutines) used by the current process
 	return s
 }
