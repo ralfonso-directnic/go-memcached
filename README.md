@@ -5,7 +5,7 @@ Modeled similarly to the stdlib `net/http` package, `memcached` gives you a simp
 
 ## Install
 ```
-$ go get github.com/mattrobenolt/go-memcached
+$ go get github.com/ralfonso-directnic/go-memcached
 ```
 
 ## Interfaces
@@ -32,7 +32,7 @@ type Deleter interface {
 package main
 
 import (
-	memcached "github.com/ialx/go-memcached"
+	memcached "github.com/ralfonso-directnic/go-memcached"
 )
 
 type Cache struct {}
@@ -58,4 +58,4 @@ func main() {
  * [Simple Memcached](examples/memcached.go)  *Don't actually use this*
 
 ## Documentation
- * [http://godoc.org/github.com/mattrobenolt/go-memcached](http://godoc.org/github.com/mattrobenolt/go-memcached)
+ * [http://godoc.org/github.com/ralfonso-directnic/go-memcached](http://godoc.org/github.com/mattrobenolt/go-memcached)
