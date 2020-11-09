@@ -189,12 +189,12 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 				//response := setter.Set(item)
 				response := setter.SetWithContext(ctx, item)
 				if response != nil {
-					byt = response.WriteResponse(c.rwc)
-					c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
+					n,_ := response.WriteResponse(c.rwc)
+					c.server.Stats["bytes_written"].(*CounterStat).Increment(n)
 					c.end()
 				} else {
-					byt = c.rwc.WriteString(StatusStored)
-					c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
+					n,_ := c.rwc.WriteString(StatusStored)
+					c.server.Stats["bytes_written"].(*CounterStat).Increment(n)
 					c.end()
 				}
 			}
@@ -205,7 +205,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 			for key, value := range c.server.Stats {
 				fmt.Fprintf(c.rwc, StatusStat, key, value)
 			}
-			byt = c.rwc.WriteString(StatusEnd)
+			byt,_ = c.rwc.WriteString(StatusEnd)
 			c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 			c.end()
 		default:
@@ -223,11 +223,11 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 		//err := deleter.Delete(key)
 		err := deleter.DeleteWithContext(ctx, key)
 		if err != nil {
-			byt = c.rwc.WriteString(StatusNotFound)
+			byt,_ = c.rwc.WriteString(StatusNotFound)
 			c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 			c.end()
 		} else {
-			byt = c.rwc.WriteString(StatusDeleted)
+			byt,_ = c.rwc.WriteString(StatusDeleted)
 			c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 			c.end()
 		}
@@ -250,7 +250,7 @@ func (c *conn) ReadLine() (line []byte, err error) {
 	
 	line, _, err = c.rwc.ReadLine()
 	
-	c.server.Stats["bytes_read"].(*CounterStat).Increment(len(n))
+	c.server.Stats["bytes_read"].(*CounterStat).Increment(len(line))
 	
 	return
 }
