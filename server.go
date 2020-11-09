@@ -68,7 +68,7 @@ func (s *Server) Serve(l net.Listener) error {
 	defer cancel()
 	//push stats into the handler
 	handler, _ := s.Handler.(StatsHandler)
-	handler.Stats(&s.Stats)
+	handler.Stats(s.Stats)
 
 	for {
 		rw, e := l.Accept()
