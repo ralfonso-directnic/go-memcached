@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	memcached "github.com/mattrobenolt/go-memcached"
+	memcached "github.com/ralfonso-directnic/go-memcached"
 	"log"
 	"runtime"
 )
