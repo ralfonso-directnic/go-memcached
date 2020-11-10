@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"strconv"
 )
@@ -143,10 +144,12 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 		switch line[1] {
 		case 'e':
 			if len(line) < 11 {
+    			log.Println("Line too short in set:",line)
 				return Error
 			}
 			setter, ok := c.server.Handler.(Setter)
 			if !ok {
+    			log.Println("Handler Setter Not Ok")
 				return Error
 			}
 			item := &Item{}
@@ -159,6 +162,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 			n, err := c.Read(value)
 			
 			if err != nil {
+    			log.Println(err)
 				return Error
 			}
 
@@ -168,6 +172,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 				byt = response.WriteResponse(c.rwc)
 				c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 				c.ReadLine() // Read out the rest of the line
+				log.Println("Bad Chunk Data")
 				return Error
 			}
 
@@ -177,6 +182,7 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 				byt = response.WriteResponse(c.rwc)
 				c.server.Stats["bytes_written"].(*CounterStat).Increment(byt)
 				c.ReadLine() // Read out the rest of the line
+				log.Println("Bad Chunk Data")
 				return Error
 			}
 
