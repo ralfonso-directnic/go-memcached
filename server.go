@@ -192,7 +192,8 @@ func (c *conn) handleRequest(ctx *context.Context) error {
 
 			c.server.Stats["cmd_set"].(*CounterStat).Increment(1)
 			if cmd.Noreply {
-				go setter.Set(item)
+				//go setter.Set(item)
+				go setter.SetWithContext(ctx, item)
 			} else {
 				//response := setter.Set(item)
 				response := setter.SetWithContext(ctx, item)

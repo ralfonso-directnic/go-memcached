@@ -8,7 +8,7 @@ type RequestHandler interface{
 
 type StatsHandler interface {
 	RequestHandler
-	Stats(*Stats)
+	Stats(Stats)
 }
 
 // A Getter is an object who responds to a simple
