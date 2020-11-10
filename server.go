@@ -67,8 +67,7 @@ func (s *Server) Serve(l net.Listener) error {
 	defer l.Close()
 	defer cancel()
 	//push stats into the handler
-	handler, _ := s.Handler.(StatsHandler)
-	handler.Stats(s.Stats)
+
 
 	for {
 		rw, e := l.Accept()
@@ -287,5 +286,13 @@ func parseStorageLine(line []byte) *StorageCmd {
 
 // Initialize a new memcached Server
 func NewServer(listen string, handler RequestHandler) *Server {
-	return &Server{listen, handler, NewStats()}
+	s := &Server{listen, handler, NewStats()}
+ 
+ 
+    //setup stats handler
+    hndl,_ := s.Handler.(StatsHandler)
+	hndl.Stats(s.Stats)
+ 
+    return s
+
 }
